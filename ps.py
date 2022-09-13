@@ -40,62 +40,53 @@ class psRegisters:
         #self.registers = {'name': 'output1Status', 'description': 'Output 1', 'type': 'BOOL', 'address:' 0x110, 'bit': 15}
 
         self.registers = {'output1Relais': ['Output 1', 'BOOL', 0x110, 14],
-                            'output1Auto': ['Output 1', 'BOOL', 0x110, 15] }
-
-    def read(self, client, bit = 0):
-        try:
-            # -----------------------------------------
-            # Routine to read a string from one address with 8 registers
-            if self.type == 'Strg8':
-                r1 = client.read_holding_registers(self.address, 8, unit=2)
-                str8Register = BinaryPayloadDecoder.fromRegisters(r1.registers, byteorder=Endian.Big)
-                self.value = str8Register.decode_string(8)
-
-            # Routine to read a U16 from one address with 1 register
-            if self.type == 'U16':
-                
-                r1 = client.read_holding_registers(self.address, 1, unit=2)
-
-                print(str(r1) + "  " + str(r1.registers))
-                self.value = r1.registers
-
-            # Routine to read a U16 from one address with 1 register
-            if self.type == 'BOOL':
-                
-                r1 = client.read_holding_registers(self.address, 1, self.slaveAdr)
-               # print(str(r1) + " " + str(r1.registers[0]) + "  " + str(r1.registers) + str(type(r1.registers)))
-
-                self.value = bool(r1.registers[0] & (2 ^ bit))
-
-
-            return True
-            # print(self.name + ':\t' + str(self.value))
-        except Exception as ex:
-            print("### Error Reading from PS: ", ex)
-            return False
-
-    def getRegister(self):
-        return self.registers
-
-    def getTimestamp(self):
-        return self.timestamp
-
+                            'output1Auto': ['Output 1', 'BOOL', 0x110, 15] ,
+                            'redox': ['Output 1', 'U16', 0x80, 15] }
 
     def getValue(self, name):
 
         reg = self.registers[name]
         value = None
-        # print(reg[0])
-        # print(reg[1])
-        # print(reg[3])
-        # print(reg[Reg.TYPE])
-        # print("")
 
         self.client.connect()
         if reg[Reg.TYPE] == 'BOOL':            
             r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
             #print(str(r1.registers))
-            value = bool(r1.registers[0] & (2 ^ reg[Reg.BIT]))
+            value = bool(r1.registers[0] & (2 ** reg[Reg.BIT]))
+        elif reg[Reg.TYPE] == 'uint16':    
+            r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
+            #print(str(r1.registers))
+            value = r1.registers[0]
+        else:
+            exit(-1)
+
+        self.client.close()
+        return value
+
+    def setValue(self, name, input):
+
+        reg = self.registers[name]
+
+        self.client.connect()
+        
+        if reg[Reg.TYPE] == 'BOOL':
+            if input == 1:
+                r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
+                newVale = r1.registers[0] | (2 ** reg[Reg.BIT])
+                #print(newVale)
+                if newVale != r1.registers[0]:
+                    #print("write")
+                    self.client.write_registers(reg[Reg.ADDRESS], newVale, unit=self.slaveAdr)
+            elif input == 0:
+                r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
+                newVale = r1.registers[0] & ~(2 ** reg[Reg.BIT])
+                #print(newVale)
+                if newVale != r1.registers[0]:
+                    #print("write")
+                    self.client.write_registers(reg[Reg.ADDRESS], newVale, unit=self.slaveAdr)
+            else:
+                exit(-1)
+            
         elif reg[Reg.TYPE] == 'uint16':    
             r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
             #print(str(r1.registers))
@@ -106,12 +97,6 @@ class psRegisters:
         self.client.close()
 
 
-        return value
-            
-
-
-
-
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Get data from Idegis Poolstation via Modbus')
@@ -120,8 +105,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     ps = psRegisters()
 
-    if args.setValue:
-        print(str(ps.setValue(args.registerName)))
+    if args.setValue or args.setValue == 0:
+        str(ps.setValue(args.registerName, args.setValue))
         print(str(ps.getValue(args.registerName)))
     else:
         print(str(ps.getValue(args.registerName)))
