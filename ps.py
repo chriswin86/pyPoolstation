@@ -24,8 +24,9 @@ def roundDec(number):
 class Reg(IntEnum):
     DESCRIPTION = 0
     TYPE = 1
-    ADDRESS = 2
-    BIT = 3
+    FUNCTION = 2
+    ADDRESS = 3
+    BIT = 4
 
 
 class psRegisters:
@@ -39,9 +40,18 @@ class psRegisters:
 
         #self.registers = {'name': 'output1Status', 'description': 'Output 1', 'type': 'BOOL', 'address:' 0x110, 'bit': 15}
 
-        self.registers = {'output1Relais': ['Output 1', 'BOOL', 0x110, 14],
-                            'output1Auto': ['Output 1', 'BOOL', 0x110, 15] ,
-                            'redox': ['Output 1', 'U16', 0x80, 15] }
+        self.registers = {  'output1Relais': ['Output 1', 'BOOL', 0x03, 0x110, 14],
+                            'output1Auto': ['Output 1', 'BOOL', 0x03, 0x110, 15],
+                            'output2Relais': ['Output 1', 'BOOL', 0x03, 0x118, 14],
+                            'output2Auto': ['Output 1', 'BOOL', 0x03, 0x118, 15],
+                            'output3Relais': ['Output 1', 'BOOL', 0x03, 0x120, 14],
+                            'output3Auto': ['Output 1', 'BOOL', 0x03, 0x120, 15],
+                            'output4Relais': ['Output 1', 'BOOL', 0x03, 0x128, 14],
+                            'output4Auto': ['Output 1', 'BOOL', 0x03, 0x128, 15],
+                            'redox': ['Output 1', 'U16', 0x04, 0x81, 15],
+                            'temperature': ['Output 1', 'U16', 0x04, 0xB1, 15], 
+                            'salt': ['Output 1', 'U16', 0x04, 0xC1, 15], 
+                            'ph': ['Output 1', 'U16', 0x04, 0x51, 15] }
 
     def getValue(self, name):
 
@@ -49,13 +59,16 @@ class psRegisters:
         value = None
 
         self.client.connect()
-        if reg[Reg.TYPE] == 'BOOL':            
+        if reg[Reg.FUNCTION] == 0x03:
             r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
-            #print(str(r1.registers))
+        elif reg[Reg.FUNCTION] == 0x04:
+            r1 = self.client.read_input_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
+                 
+        print(str(r1.registers))
+        
+        if reg[Reg.TYPE] == 'BOOL':   
             value = bool(r1.registers[0] & (2 ** reg[Reg.BIT]))
-        elif reg[Reg.TYPE] == 'uint16':    
-            r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
-            #print(str(r1.registers))
+        elif reg[Reg.TYPE] == 'U16':   
             value = r1.registers[0]
         else:
             exit(-1)
