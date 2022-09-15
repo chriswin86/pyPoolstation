@@ -64,7 +64,7 @@ class psRegisters:
         elif reg[Reg.FUNCTION] == 0x04:
             r1 = self.client.read_input_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
                  
-        print(str(r1.registers))
+        #print(str(r1.registers))
         
         if reg[Reg.TYPE] == 'BOOL':   
             value = bool(r1.registers[0] & (2 ** reg[Reg.BIT]))
