@@ -67,7 +67,7 @@ class psRegisters:
         print(str(r1.registers))
         
         if reg[Reg.TYPE] == 'BOOL':   
-            value = bool(r1.registers[0] & (2 ** reg[Reg.BIT]))
+            value = int((r1.registers[0] & (2 ** reg[Reg.BIT])) / (2 ** reg[Reg.BIT]))
         elif reg[Reg.TYPE] == 'U16':   
             value = r1.registers[0]
         else:
