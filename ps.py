@@ -88,14 +88,14 @@ class psRegisters:
                 newVale = r1.registers[0] | (2 ** reg[Reg.BIT])
                 #print(newVale)
                 if newVale != r1.registers[0]:
-                    #print("write")
+                    print("write 1")
                     self.client.write_registers(reg[Reg.ADDRESS], newVale, unit=self.slaveAdr)
             elif input == 0:
                 r1 = self.client.read_holding_registers(reg[Reg.ADDRESS], 1, unit=self.slaveAdr)
                 newVale = r1.registers[0] & ~(2 ** reg[Reg.BIT])
                 #print(newVale)
                 if newVale != r1.registers[0]:
-                    #print("write")
+                    print("write 0")
                     self.client.write_registers(reg[Reg.ADDRESS], newVale, unit=self.slaveAdr)
             else:
                 exit(-1)
